@@ -1,0 +1,122 @@
+
+/* Google Font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #8e2de2, #4a00e0);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+}
+
+/* Container */
+.container {
+  text-align: center;
+  max-width: 450px;
+  width: 90%;
+  padding: 30px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  animation: fadeIn 0.8s ease-in-out;
+}
+
+.container h1 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+/* Card Sections */
+.card {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 20px;
+  border-radius: 15px;
+  margin: 20px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.6s ease forwards;
+}
+
+.card h2 {
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+/* Inputs */
+input {
+  display: block;
+  width: 90%;
+  margin: 10px auto;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  background: rgba(255, 255, 255, 0.85);
+  color: #333;
+}
+
+input:focus {
+  border: 2px solid #8e2de2;
+  background: #fff;
+}
+
+/* Buttons */
+button {
+  padding: 12px 25px;
+  margin-top: 12px;
+  border: none;
+  border-radius: 25px;
+  background: #ff6f61;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  background: #ff4a3d;
+  box-shadow: 0 4px 15px rgba(255, 79, 67, 0.6);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+.made-with {
+  overflow: hidden;
+  white-space: nowrap;
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 5px;
+  font-size: 14px;
+  font-weight: 500;
+  color: inherit; /* text uses normal header color */
+}
+
+.made-with .heart {
+  color: red; /* only heart is red */
+}
+
+.made-with {
+  display: inline-block;
+  animation: scrollText 12s linear infinite;
+}
+
+@keyframes scrollText {
+  0%   { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}

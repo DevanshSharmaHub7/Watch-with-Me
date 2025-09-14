@@ -1,0 +1,276 @@
+/* Google Font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: #ece5dd;
+}
+
+/* Room Layout */
+.room-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Header */
+.room-header {
+  background: #075e54;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+}
+
+.room-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.room-header p {
+  margin: 5px 0 0;
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.participants {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Main Split */
+.room-main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Video Section */
+.video-section {
+  flex: 2;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+}
+
+.video-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+.video-wrapper iframe {
+  width: 100%;
+  height: 100%;
+}
+
+.controls {
+  background: #333;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: #fff;
+}
+
+.control-btn {
+  background: #25d366;
+  color: #fff;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.control-btn:hover {
+  background: #20b857;
+}
+
+.sync-indicator {
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Chat Section */
+.chat-section {
+  flex: 1;
+  background: #fff;
+  border-left: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  min-width: 340px;
+}
+
+/* Chat Header */
+.chat-header {
+  background: #128c7e;
+  color: white;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chat-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.online-dot {
+  width: 10px;
+  height: 10px;
+  background: #25d366;
+  border-radius: 50%;
+}
+
+/* Messages */
+.chat-messages {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  background: #ece5dd;
+}
+
+.system-message {
+  text-align: center;
+  font-size: 13px;
+  color: #555;
+  margin: 12px auto;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 6px 12px;
+  border-radius: 10px;
+  max-width: fit-content;
+}
+
+/* WhatsApp style bubbles */
+.chat-message {
+  margin-bottom: 12px;
+  display: flex;
+}
+
+.message-sent {
+  justify-content: flex-end;
+}
+
+.message-received {
+  justify-content: flex-start;
+}
+
+.message-bubble {
+  max-width: 70%;
+  padding: 8px 40px 8px 12px; /* add space on right for time */
+  border-radius: 7.5px;
+  position: relative;
+  font-size: 14px;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+
+.message-sent .message-bubble {
+  background: #dcf8c6;
+  border-bottom-right-radius: 0;
+}
+
+.message-received .message-bubble {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-bottom-left-radius: 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Time inside bubble */
+.message-time {
+  font-size: 11px;
+  opacity: 0.6;
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  white-space: nowrap; /* keep time inline */
+}
+
+/* Input Area */
+.chat-input-area {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  background: #f0f0f0;
+  border-top: 1px solid #ddd;
+}
+
+.chat-input-area input {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 25px;
+  font-size: 14px;
+  outline: none;
+}
+
+.send-button {
+  margin-left: 10px;
+  background: #25d366;
+  border: none;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  color: white;
+  transition: background 0.2s ease;
+}
+
+.send-button:hover {
+  background: #20b857;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .room-main {
+    flex-direction: column;
+  }
+  .video-section {
+    height: 40vh;
+  }
+  .chat-section {
+    flex: 1;
+    border-left: none;
+    border-top: 1px solid #ddd;
+    min-width: auto;
+  }
+}
+
+.made-with {
+  overflow: hidden;
+  white-space: nowrap;
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 5px;
+  font-size: 14px;
+  font-weight: 500;
+  color: inherit; /* text uses normal header color */
+}
+
+.made-with .heart {
+  color: red; /* only heart is red */
+}
+
+.made-with {
+  display: inline-block;
+  animation: scrollText 12s linear infinite;
+}
+
+@keyframes scrollText {
+  0%   { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Room - Watch with Me</title>
+  <!-- Load the new premium room.css -->
+  <link rel="stylesheet" href="/room.css" />
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <div class="room-container">
+    <!-- Room Header -->
+    <div class="room-header">
+      <div class="room-info">
+        <h2>Watch with Me</h2>
+        <p id="roomInfo"></p>
+      </div>
+      <div class="made-with">
+        Made with <span class="heart">❤</span> by Devansh and Naman
+      </div>
+
+
+    </div>
+
+    <!-- Main Room Content -->
+    <div class="room-main">
+      <!-- Video Section -->
+      <div class="video-section">
+        <div class="video-wrapper">
+          <iframe id="ytPlayer" frameborder="0" allowfullscreen></iframe>
+        </div>
+        <div class="controls">
+          <button class="control-btn" onclick="controlVideo('play')">
+            ▶️ Play
+          </button>
+          <button class="control-btn" onclick="controlVideo('pause')">
+            ⏸️ Pause
+          </button>
+          <div class="sync-indicator">
+            <span id="syncStatus">🔄 Synced</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Section -->
+      <div class="chat-section">
+        <div class="chat-header">
+          <h3>💬 Live Chat</h3>
+          <div class="online-dot"></div>
+        </div>
+        <div class="chat-messages" id="chatBox">
+          <div class="system-message">🎉 Welcome! Start chatting with other viewers.</div>
+        </div>
+        <div class="chat-input-area">
+          <input id="chatInput" type="text" placeholder="Type a message..." />
+          <!-- WhatsApp-style send button -->
+          <button class="send-button" onclick="sendMessage()">✈️</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="footer">
+    Made with <span>❤</span> by Devansh and Naman
+  </footer>
+
+  <script>
+    const socket = io();
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentUserName = urlParams.get("name") || "Guest";
+    const roomId = window.location.pathname.split("/").pop();
+
+    socket.emit("join-room", { roomId, name: currentUserName });
+
+    document.getElementById("roomInfo").innerHTML = `Room ID: <strong>${roomId}</strong>`;
+
+    // Handle incoming chat messages with WhatsApp-style formatting
+    socket.on("chat-message", ({ name, message }) => {
+      addChatMessage(name, message);
+    });
+
+    // Handle user joined notifications
+    socket.on("user-joined", (message) => {
+      addSystemMessage(message);
+    });
+
+    // Function to add WhatsApp-style chat messages
+    function addChatMessage(senderName, message) {
+      const chatBox = document.getElementById("chatBox");
+      const messageDiv = document.createElement("div");
+
+      // Determine if this message is from current user
+      const isCurrentUser = senderName === currentUserName;
+      const displayName = isCurrentUser ? "You" : senderName;
+
+      // Create message with proper alignment
+      messageDiv.className = `chat-message ${isCurrentUser ? 'message-sent' : 'message-received'}`;
+
+      const now = new Date();
+      const timeString = now.toLocaleTimeString('en-US', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      messageDiv.innerHTML = `
+        <div class="message-bubble">
+          <div class="message-content">${escapeHtml(message)}</div>
+          <span class="message-time">${timeString}</span>
+        </div>
+      `;
+
+      chatBox.appendChild(messageDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // Smooth animation
+      messageDiv.style.opacity = '0';
+      messageDiv.style.transform = 'translateY(15px)';
+      setTimeout(() => {
+        messageDiv.style.transition = 'all 0.3s ease';
+        messageDiv.style.opacity = '1';
+        messageDiv.style.transform = 'translateY(0)';
+      }, 50);
+    }
+
+    // Add system messages
+    function addSystemMessage(message) {
+      const chatBox = document.getElementById("chatBox");
+      const systemDiv = document.createElement("div");
+      systemDiv.className = "system-message";
+      systemDiv.textContent = message;
+      chatBox.appendChild(systemDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Send message
+    function sendMessage() {
+      const input = document.getElementById("chatInput");
+      const message = input.value.trim();
+
+      if (message) {
+        socket.emit("chat-message", { roomId, name: currentUserName, message });
+        input.value = "";
+      }
+    }
+
+    // Video control
+    function controlVideo(action) {
+      const player = document.getElementById("ytPlayer").contentWindow;
+      if (action === "play") {
+        socket.emit("video-control", { roomId, action: "play" });
+        player.postMessage('{"event":"command","func":"playVideo","args":""}', "*");
+        document.getElementById("syncStatus").textContent = "▶️ Playing";
+      } else {
+        socket.emit("video-control", { roomId, action: "pause" });
+        player.postMessage('{"event":"command","func":"pauseVideo","args":""}', "*");
+        document.getElementById("syncStatus").textContent = "⏸️ Paused";
+      }
+
+      setTimeout(() => {
+        document.getElementById("syncStatus").textContent = "🔄 Synced";
+      }, 2000);
+    }
+
+    // Handle video control from other users
+    socket.on("video-control", ({ action }) => {
+      const player = document.getElementById("ytPlayer").contentWindow;
+      player.postMessage(`{"event":"command","func":"${action}Video","args":""}`, "*");
+
+      if (action === "play") {
+        document.getElementById("syncStatus").textContent = "▶️ Playing";
+      } else {
+        document.getElementById("syncStatus").textContent = "⏸️ Paused";
+      }
+
+      setTimeout(() => {
+        document.getElementById("syncStatus").textContent = "🔄 Synced";
+      }, 2000);
+    });
+
+    // Escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Enter key to send message
+    document.getElementById("chatInput").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        sendMessage();
+      }
+    });
+
+    // Load video
+    fetch(`/room-data/${roomId}`)
+      .then(res => res.json())
+      .then(data => {
+        const videoId = extractYouTubeID(data.videoUrl);
+        if (videoId) {
+          document.getElementById("ytPlayer").src =
+            `https://www.youtube.com/embed/${videoId}?enablejsapi=1&rel=0`;
+        }
+      })
+      .catch(err => {
+        console.error("Error loading video:", err);
+        addSystemMessage("⚠️ Could not load video");
+      });
+
+    // Extract YouTube video ID
+    function extractYouTubeID(url) {
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+      const match = url.match(regExp);
+      return (match && match[2].length === 11) ? match[2] : null;
+    }
+
+    // Participant count (basic placeholder)
+    let participantCount = 1;
+    setInterval(() => {
+      document.getElementById("participantCount").textContent =
+        `👥 ${participantCount} viewer${participantCount !== 1 ? 's' : ''}`;
+    }, 5000);
+  </script>
+</body>
+</html>

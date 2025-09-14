@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Watch with Me</title>
+  <link rel="stylesheet" href="home.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Watch with Me</h1>
+    <div class="made-with">
+      Made with <span class="heart">❤</span> by Devansh and Naman
+    </div>
+
+
+
+    <!-- Create Room -->
+    <div class="card">
+      <h2>Create Room</h2>
+      <input id="createName" type="text" placeholder="Enter your name" />
+      <input id="createVideo" type="text" placeholder="Enter YouTube URL" />
+      <button id="createRoomBtn">Create Room</button>
+    </div>
+
+    <!-- Join Room -->
+    <div class="card">
+      <h2>Join Room</h2>
+      <input id="joinName" type="text" placeholder="Enter your name" />
+      <input id="joinRoomId" type="text" placeholder="Enter Room ID" />
+      <button id="joinRoomBtn">Join Room</button>
+    </div>
+  </div>
+
+  <script>
+    // Create Room Button
+    document.getElementById("createRoomBtn").addEventListener("click", () => {
+      const name = document.getElementById("createName").value.trim();
+      const videoUrl = document.getElementById("createVideo").value.trim();
+
+      if (!name || !videoUrl) {
+        alert("Please enter your name and a YouTube URL.");
+        return;
+      }
+
+      // Create room API call
+      fetch(`/create?video=${encodeURIComponent(videoUrl)}`)
+        .then(res => res.json())
+        .then(data => {
+          console.log("Room created:", data);
+          alert(`Room created! Share this ID: ${data.roomId}`);
+          // redirect to room page
+          window.location.href = `/room/${data.roomId}?name=${encodeURIComponent(name)}`;
+        })
+        .catch(err => {
+          console.error("Error creating room:", err);
+          alert("Something went wrong");
+        });
+    });
+
+    // Join Room Button (THIS WAS MISSING!)
+    document.getElementById("joinRoomBtn").addEventListener("click", () => {
+      const name = document.getElementById("joinName").value.trim();
+      const roomId = document.getElementById("joinRoomId").value.trim();
+
+      if (!name || !roomId) {
+        alert("Please enter your name and a Room ID.");
+        return;
+      }
+
+      // Check if room exists first
+      fetch(`/room-data/${roomId}`)
+        .then(res => {
+          if (!res.ok) {
+            throw new Error("Room not found!");
+          }
+          return res.json();
+        })
+        .then(data => {
+          console.log("Joining room:", roomId);
+          // redirect to room page
+          window.location.href = `/room/${roomId}?name=${encodeURIComponent(name)}`;
+        })
+        .catch(err => {
+          console.error("Error joining room:", err);
+          alert("Room not found! Please check the Room ID.");
+        });
+    });
+
+    // Allow Enter key to work on inputs
+    document.getElementById("createName").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") document.getElementById("createRoomBtn").click();
+    });
+    
+    document.getElementById("createVideo").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") document.getElementById("createRoomBtn").click();
+    });
+    
+    document.getElementById("joinName").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") document.getElementById("joinRoomBtn").click();
+    });
+    
+    document.getElementById("joinRoomId").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") document.getElementById("joinRoomBtn").click();
+    });
+  </script>
+</body>
+</html>
