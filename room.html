@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Room - Watch with Me</title>
+  <link rel="stylesheet" href="/room.css" />
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <div class="room-container">
+
+    <div class="room-header">
+      <div class="room-info">
+        <h2>🎬 Watch with Me</h2>
+        <p>Room: <strong id="roomInfo"></strong></p>
+      </div>
+      <div class="made-with">Made with <span class="heart">❤</span> by Devansh and Naman</div>
+    </div>
+
+    <div class="room-main">
+
+      <div class="video-section">
+        <div class="video-wrapper">
+          <div id="ytPlayer"></div>
+        </div>
+        <div class="controls">
+          <div class="sync-indicator synced" id="syncStatus">🔄 Synced</div>
+        </div>
+      </div>
+
+      <div class="chat-section">
+        <div class="chat-header">
+          <h3>💬 Live Chat</h3>
+          <div class="online-dot"></div>
+        </div>
+        <div class="chat-messages" id="chatBox">
+          <div class="system-message">🎉 Welcome! Start chatting.</div>
+        </div>
+        <div class="chat-input-area">
+          <input id="chatInput" type="text" placeholder="Type a message..." />
+          <button class="send-button" onclick="sendMessage()">➤</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+ <script>
+  const socket = io();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const currentUserName = urlParams.get("name") || "Guest";
+
+  const pathSegments = window.location.pathname.split("/").filter(Boolean);
+  const roomId = pathSegments[pathSegments.length - 1];
+
+  socket.emit("join-room", { roomId, name: currentUserName });
+  document.getElementById("roomInfo").textContent = roomId;
+
+  let player = null;
+  let isSyncing = false;
+
+  // ── YouTube IFrame API ─────────────────────────────────────────
+  window.onYouTubeIframeAPIReady = function () {
+    fetch(`/room-data/${roomId}`)
+      .then(res => res.json())
+      .then(data => {
+        const videoId = extractYouTubeID(data.videoUrl);
+        if (!videoId) return addSystemMessage("⚠️ Invalid YouTube URL");
+
+        player = new YT.Player('ytPlayer', {
+          videoId,
+          width: '100%',
+          height: '100%',
+          playerVars: { rel: 0, modestbranding: 1, enablejsapi: 1, autoplay: 0 },
+          events: {
+            onReady: () => addSystemMessage("✅ Video loaded — watch in sync!"),
+            onStateChange: onPlayerStateChange,
+            onPlaybackRateChange: onRateChange,
+            onPlaybackQualityChange: onQualityChange,
+          }
+        });
+      })
+      .catch(() => addSystemMessage("⚠️ Could not load video"));
+  };
+
+  const tag = document.createElement('script');
+  tag.src = "https://www.youtube.com/iframe_api";
+  document.head.appendChild(tag);
+
+  // ── State change ───────────────────────────────────────────────
+  function onPlayerStateChange(event) {
+    if (isSyncing) return;
+    const time = player.getCurrentTime();
+    const sentAt = Date.now();
+
+    if (event.data === YT.PlayerState.PLAYING) {
+      socket.emit("video-control", { roomId, action: "play", time, sentAt });
+      setSyncStatus("playing");
+    } else if (event.data === YT.PlayerState.PAUSED) {
+      socket.emit("video-control", { roomId, action: "pause", time, sentAt });
+      setSyncStatus("paused");
+    }
+  }
+
+  function onRateChange(event) {
+    if (isSyncing) return;
+    socket.emit("video-control", { roomId, action: "rate", rate: event.data });
+  }
+
+  function onQualityChange(event) {
+    if (isSyncing) return;
+    socket.emit("video-control", { roomId, action: "quality", quality: event.data });
+  }
+
+  // ── Receive sync ───────────────────────────────────────────────
+  socket.on("video-control", ({ action, time, rate, quality, sentAt }) => {
+    if (!player) return;
+    isSyncing = true;
+
+    const latency = (Date.now() - sentAt) / 1000;
+    const compensatedTime = time + (action === "play" ? latency : 0);
+
+    if (action === "play") {
+      if (Math.abs(player.getCurrentTime() - compensatedTime) > 0.5) {
+        player.seekTo(compensatedTime, true);
+      }
+      player.playVideo();
+      setSyncStatus("playing");
+    } else if (action === "pause") {
+      if (Math.abs(player.getCurrentTime() - time) > 0.5) {
+        player.seekTo(time, true);
+      }
+      player.pauseVideo();
+      setSyncStatus("paused");
+    } else if (action === "rate") {
+      player.setPlaybackRate(rate);
+      addSystemMessage(`⚡ Speed changed to ${rate}x`);
+    } else if (action === "quality") {
+      player.setPlaybackQuality(quality);
+      addSystemMessage(`🎥 Quality changed to ${quality}`);
+    }
+
+    setTimeout(() => {
+      isSyncing = false;
+      setSyncStatus("synced");
+    }, 1000);
+  });
+
+  function setSyncStatus(state) {
+    const el = document.getElementById("syncStatus");
+    el.className = `sync-indicator ${state}`;
+    if (state === "playing")     el.textContent = "▶ Playing";
+    else if (state === "paused") el.textContent = "⏸ Paused";
+    else                         el.textContent = "🔄 Synced";
+  }
+
+  // ── Chat ───────────────────────────────────────────────────────
+  socket.on("chat-message", ({ name, message }) => addChatMessage(name, message));
+  socket.on("user-joined",  (message) => addSystemMessage(message));
+
+  function addChatMessage(senderName, message) {
+    const chatBox = document.getElementById("chatBox");
+    const isCurrentUser = senderName === currentUserName;
+    const div = document.createElement("div");
+    div.className = `chat-message ${isCurrentUser ? 'message-sent' : 'message-received'}`;
+
+    const time = new Date().toLocaleTimeString('en-US', {
+      hour12: false, hour: '2-digit', minute: '2-digit'
+    });
+
+    div.innerHTML = `
+      ${!isCurrentUser ? `<div class="message-sender">${escapeHtml(senderName)}</div>` : ''}
+      <div class="message-bubble">
+        <div class="message-content">${escapeHtml(message)}</div>
+        <span class="message-time">${time}</span>
+      </div>
+    `;
+
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    div.style.opacity = '0';
+    div.style.transform = 'translateY(10px)';
+    setTimeout(() => {
+      div.style.transition = 'all 0.25s ease';
+      div.style.opacity = '1';
+      div.style.transform = 'translateY(0)';
+    }, 30);
+  }
+
+  function addSystemMessage(msg) {
+    const chatBox = document.getElementById("chatBox");
+    const div = document.createElement("div");
+    div.className = "system-message";
+    div.textContent = msg;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  function sendMessage() {
+    const input = document.getElementById("chatInput");
+    const message = input.value.trim();
+    if (message) {
+      socket.emit("chat-message", { roomId, name: currentUserName, message });
+      input.value = "";
+    }
+  }
+
+  document.getElementById("chatInput").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") sendMessage();
+  });
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function extractYouTubeID(url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  }
+</script>
+</body>
+</html>
